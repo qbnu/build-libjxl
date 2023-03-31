@@ -1,0 +1,43 @@
+name: Buildm32
+
+on:
+  push
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2019
+    
+    # Run a job for each of the specified target architectures:
+    strategy:
+      matrix:
+        arch:
+          - win64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+      - name: Build
+        continue-on-error: true
+        run: |
+          git submodule update --init --recursive --depth 1 --recommend-shallow
+          cd libjxl
+          git submodule update --init --recursive --depth 1 --recommend-shallow
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -A Win32 ..
+          msbuild.exe /p:Platform=Win32 /p:configuration="Release" LIBJXL.sln /t:jxl /t:jxl_threads
+      - name: moving
+        run: |
+          cd libjxl
+          mv build/lib/Release/* build/Release
+          mv build/third_party/brotli/Release/* build/Release
+      - name: Upload output
+        uses: actions/upload-artifact@v3
+        with:
+          name: releaselibjxl32
+          path: libjxl/build/Release
+      # ...
