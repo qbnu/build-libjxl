@@ -33,6 +33,7 @@ jobs:
       - name: moving
         run: |
           cd libjxl
+          mkdir build/Release
           mv build/lib/Release/* build/Release
           mv build/third_party/brotli/Release/* build/Release
       - name: Upload output
